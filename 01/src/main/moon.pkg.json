@@ -1,4 +1,4 @@
 {
   "is-main": true,
-  "import": ["aoc2024_01/lib"]
+  "import": ["aoc2024_01/lib", "moonbitlang/x/fs"]
 }
