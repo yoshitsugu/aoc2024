@@ -33,13 +33,16 @@ fn parse_mul1(result : Array[Mul], rest : @immut/list.T[Char]) -> Array[Mul] {
   if rest.length() == 0 {
     return result
   }
-  let parsed = Parser::parse(
-    pseq([pstring("mul("), pdigits(), pstring(","), pdigits(), pstring(")")]),
+  let parsed : @parsem.ParseResult[(Int, Int)] = @parsem.parse(
+    @parsem.sequence(
+      @parsem.string("mul(").then(@parsem.digits().precede(@parsem.char(','))),
+      @parsem.digits().precede(@parsem.char(')')),
+    ),
     rest,
   )
-  match parsed {
-    Ok(([_, left, _, right, _], new_rest)) => {
-      result.push(Mul::{ left: to_i(left), right: to_i(right) })
+  match parsed._ {
+    Ok(((left, right), new_rest)) => {
+      result.push(Mul::{ left, right })
       parse_mul1(result, new_rest)
     }
     _ => parse_mul1(result, rest.tail())
@@ -60,25 +63,26 @@ fn parse_mul2(result : Array[Mul], rest : @immut/list.T[Char]) -> Array[Mul] {
   if rest.length() == 0 {
     return result
   }
-  let parsed = Parser::parse(
-    pchoice(
-      pseq([pstring("don't()")]),
-      pseq([pstring("mul("), pdigits(), pstring(","), pdigits(), pstring(")")]),
-    ),
-    rest,
-  )
-  match parsed {
-    Ok(([a], new_rest)) =>
-      if a == "don't()" {
-        parse_do(result, new_rest)
-      } else {
-        parse_mul2(result, new_rest)
+  match @parsem.parse(@parsem.string("don't()"), rest)._ {
+    Ok((_, new_rest)) => parse_do(result, new_rest)
+    Err(_) => {
+      let parsed : @parsem.ParseResult[(Int, Int)] = @parsem.parse(
+        @parsem.sequence(
+          @parsem.string("mul(").then(
+            @parsem.digits().precede(@parsem.char(',')),
+          ),
+          @parsem.digits().precede(@parsem.char(')')),
+        ),
+        rest,
+      )
+      match parsed._ {
+        Ok(((left, right), new_rest)) => {
+          result.push(Mul::{ left, right })
+          parse_mul2(result, new_rest)
+        }
+        _ => parse_mul2(result, rest.tail())
       }
-    Ok(([_, left, _, right, _], new_rest)) => {
-      result.push(Mul::{ left: to_i(left), right: to_i(right) })
-      parse_mul2(result, new_rest)
     }
-    _ => parse_mul2(result, rest.tail())
   }
 }
 
@@ -87,13 +91,8 @@ fn parse_do(result : Array[Mul], rest : @immut/list.T[Char]) -> Array[Mul] {
   if rest.length() == 0 {
     return result
   }
-  match Parser::parse(pstring("do()"), rest) {
+  match @parsem.parse(@parsem.string("do()"), rest)._ {
     Ok((_, new_rest)) => parse_mul2(result, new_rest)
     _ => parse_do(result, rest.tail())
   }
-}
-
-///|
-fn to_i(string : String) -> Int {
-  @strconv.parse?(string).unwrap()
 }

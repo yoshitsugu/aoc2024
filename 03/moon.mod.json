@@ -2,7 +2,8 @@
   "name": "aoc2024_03",
   "version": "0.1.0",
   "deps": {
-    "moonbitlang/x": "0.4.16"
+    "moonbitlang/x": "0.4.16",
+    "yoshitsugu/parsem": "0.0.2"
   },
   "readme": "README.md",
   "repository": "",
