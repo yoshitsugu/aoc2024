@@ -8,7 +8,10 @@ pub fn part1(input : String) -> Int64 {
 
 ///|
 pub fn part2(input : String) -> Int64 {
-  2
+  let matrix = to_matrix(input)
+  let cache = @hashmap.new()
+  calc_paths(matrix, cache)
+  count_ratings(matrix, cache)
 }
 
 ///|
@@ -99,4 +102,24 @@ fn count_routes(
 fn in_bounds(matrix : Array[Array[Int]], focus_point : (Int, Int)) -> Bool {
   let (x, y) = focus_point
   0 <= x && x < matrix[0].length() && 0 <= y && y < matrix.length()
+}
+
+///|
+fn count_ratings(
+  matrix : Array[Array[Int]],
+  cache : @hashmap.T[(Int, Int), Array[Array[(Int, Int)]]]
+) -> Int64 {
+  let mut sum : Int64 = 0
+  for j in 0..<matrix.length() {
+    for i in 0..<matrix[0].length() {
+      let value = matrix[j][i]
+      if value == 9 {
+        let ten_node_paths = cache[(i, j)]
+          .unwrap()
+          .filter(fn(paths) { paths.length() == 10 })
+        sum += ten_node_paths.length().to_int64()
+      }
+    }
+  }
+  sum
 }
